@@ -13,7 +13,7 @@ This bot was developed by **truongtrung**, a web developer with experience using
 
 ### What's New?
 - Added a new feature to create stickers for you!
-- Auto nuke will spam all channels every 5 seconds. \\Having fixed big errors
+- Auto nuke will spam all channels every 5 seconds. \\ Fix big error
 - `unban_all` unblocks server members.
 - Speed boost: it takes only 34 seconds to complete tasks when using the `!attack` command and the bot joins the channel.
 - Auto nuke when the bot joins the channel, it will perform tasks.
@@ -78,7 +78,7 @@ Bot này được phát triển bởi **truongtrung**, một nhà phát triển 
 
 ### có gì mới?
 thêm tính năng mới là tạo sticker cho bạn!
-tự động auto nuke nó sẽ spam 5 giây tất cả các kênh \\Having fixed big errors
+tự động auto nuke nó sẽ spam 5 giây tất cả các kênh \\ Fix big error
 unban_all bỏ chặn thành viên máy chủ
 tăng tốc file chỉ mất 34 giây nó đã làm nhiệm vụ khi sử dụng lệnh attck và bot tham gia kênh
 tự động nuke khi bot tham gia kênh nó sẽ làm nhiệm vụ
