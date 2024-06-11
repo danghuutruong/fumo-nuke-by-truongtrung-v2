@@ -1,27 +1,29 @@
-# fumo-nuke-by-truongtrung-v2
-This source code includes a Discord bot written in JavaScript using the discord.js library. The bot is designed to help you quickly create channels.
-
-### ENGLISH
+### English
 
 ## Introduction
 
 ### Description
-This source code includes a Discord bot written in JavaScript and run through the `discord.js` library. This bot is designed to help you quickly create channels.
+This source code includes a Discord bot written in JavaScript and operates through the `discord.js` library. This bot is designed to quickly create channels for you.
 
 ### Author
-This bot was developed by **truongtrung**, a web developer with experience using WordPress and offering website design services.
+This bot is developed by **truongtrung**, a web developer with experience using WordPress and providing website design services.
 
 ### What's New?
 - Added a new feature to create stickers for you!
-- Auto nuke will spam all channels every 5 seconds. \\ Fix big error
-- `unban_all` unblocks server members.
-- Speed boost: it takes only 34 seconds to complete tasks when using the `!attack` command and the bot joins the channel.
-- Auto nuke when the bot joins the channel, it will perform tasks.
+- Auto nuke will spam all channels every 5 seconds.
+- `unban_all` unbans all server members.
+- Speed up file processing: tasks are completed in just 29 seconds when using the `attack` command and when the bot joins a channel.
+- Auto nuke activates upon the bot joining a channel.
+- Shuffle all channel positions and roles within the server in 1 minute.
+- Added a `help` command for users to get familiar with.
 
 ## Command Usage
-`!attack` command to perform tasks
-`!auto_nuke` command to spam all channels
-`!unban_all` unblocks all server members
+```!attack``` - Execute an attack on the server  
+```!unban_all``` - Unban all users in the server  
+```!auto_nuke on/off``` - Start or stop auto nuke  
+```!shuffle_channels``` - Shuffle all channel positions within the server for 1 minute  
+```!shuffle_roles``` - Shuffle all role positions within the server for 1 minute  
+```!help``` - Display this help message  
 
 ### Requirements
 - Node.js and Visual Studio Code (VSCode) installed on your computer.
@@ -29,44 +31,43 @@ This bot was developed by **truongtrung**, a web developer with experience using
 
 ### Installation and Configuration
 
-1. **Initialize Node.js Project**:
+1. **Initialize the Node.js Project**:
     - Open the terminal in VSCode
-    - And open the downloaded file
-
+    - Open the downloaded file
+    
 2. **Install `discord.js`**:
-    - Use the commands `npm init -y` and `npm install`, along with `npm install discord.js` and `npm install discord.js image-size` to install the library.
-
+    - Use the commands `npm init -y`, `npm install`, and `npm install discord.js image-size` to install the library.
+   
 3. **Run the Bot**:
     - Press the run button and select Node.js to start the bot.
 
 ### How to Edit
 
-The `config.json` file will contain:
-```json
-{
-    "token": "YOUR_BOT_TOKEN_HERE",
-    "newServerName": "New Server Name"
-}
+The `config.json` file contains:
 ```
-- `token` stores your bot token
-- `newServerName` is the new server name, e.g., "NUKE FUMO BY TRUONGTRUNG"
+"token": "YOUR_BOT_TOKEN_HERE",
+"newServerName": "New Server Name"
+```
+- `token`: Store your bot token.
+- `newServerName`: Change the server name, e.g., "NUKE FUMO BY TRUONGTRUNG".
 
 ### How to Change Channel Names, Messages, and Roles
 
-If you want to change these individually, here is an example to guide you:
-In the `main.js` file, you will need to find the tags I added:
+If you want to customize these settings, here is an example to guide you:
+In the `main.js` file, find the tagged sections:
 
-// Create new channels
-// Send messages to the last created channel
-// Create new roles
-You can change them as you wish.
+```
+// Create 40 channels and 10 roles
+// Spam messages
+```
+You can modify these sections as desired.
 
 ### Note:
-- Add the bot to your Discord server to test it.
+- Add the bot to your Discord server for testing.
 
-Good luck with your Discord bot project.
+Good luck with your Discord bot project!
 
-### TIẾNG VIỆT
+### tiếng việt
 
 ## Giới thiệu
 
@@ -78,15 +79,20 @@ Bot này được phát triển bởi **truongtrung**, một nhà phát triển 
 
 ### có gì mới?
 thêm tính năng mới là tạo sticker cho bạn!
-tự động auto nuke nó sẽ spam 5 giây tất cả các kênh \\ Fix big error
+tự động auto nuke nó sẽ spam 5 giây tất cả các kênh
 unban_all bỏ chặn thành viên máy chủ
-tăng tốc file chỉ mất 34 giây nó đã làm nhiệm vụ khi sử dụng lệnh attck và bot tham gia kênh
+tăng tốc file chỉ mất 29 giây nó đã làm nhiệm vụ khi sử dụng lệnh attck và bot tham gia kênh
 tự động nuke khi bot tham gia kênh nó sẽ làm nhiệm vụ
+Xáo trộn tất cả các kênh vị trí trong máy chủ trong 1 phút và vai trò
+thêm lệnh help cho người sử dụng làm quen
 
 ## Hướng dẫn sử dụng lệnh
-`!attack` lệnh để làm nhiệm vụ
-`!auto_nuke` lệnh spam tất cả các kênh
-`!unban_all` bỏ chặn tất cả thành viên máy chủ
+```!attack``` - Thực hiện một cuộc tấn công vào máy chủ
+```!unban_all``` - Unban tất cả người dùng trong máy chủ
+```!auto_nuke on/off``` - bắt đầu hoặc dừng tự động nuke
+```!shuffle_channels``` - xáo trộn tất cả các vị trí của các kênh trong máy chủ trong 1 phút
+```!shuffle_roles``` - xáo trộn tất cả các vị trí của vai trò trong máy chủ trong 1 phút
+```!help``` - Hiển thị thông báo trợ giúp này
 
 ### Yêu cầu
 - Node.js và Visual Studio Code (VSCode) đã được cài đặt trên máy tính của bạn.
@@ -119,9 +125,8 @@ new Server Name là đổi tên máy chủ ví dụ "NUKE FUMO BY TRUONGTRUNG"
 niếu bạn muốn đổi riêng mình và đây tôi ví dụ chỉ bạn.
 trong file `main.js` bạn sẽ phải tìm mà tôi đã tag
 
-// Tạo các kênh mới
-// Gửi tin nhắn đến kênh cuối cùng đã tạo
-// Tạo các vai trò mới
+// Tạo 40 kênh và 10 vai trò
+// Spam tin nhắn
 bạn chỉ cần đổi theo ý muốn là được
 
 ### Lưu ý:
