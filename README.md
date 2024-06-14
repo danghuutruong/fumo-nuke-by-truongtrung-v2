@@ -16,6 +16,12 @@ This bot is developed by **truongtrung**, a web developer with experience using 
 - Auto nuke activates upon the bot joining a channel.
 - Shuffle all channel positions and roles within the server in 1 minute.
 - Added a `help` command for users to get familiar with.
+- Added a new variable shuffleChannelsActive to track the state of the shuffle_channels command.
+- Updated the shuffleChannels function to set shuffleChannelsActive to true when it starts and false when it finishes.
+- Updated the performAttack function to check if autoNukeActive or shuffleChannelsActive are true before executing.
+- Updated the auto_nuke command to check if shuffleChannelsActive is true before starting.
+- Updated the shuffle_channels command to check if autoNukeActive or attackActive are true before executing.
+- This should ensure that shuffle_channels and auto_nuke/attack commands do not interfere with each other.
 
 ## Command Usage
 ```!attack``` - Execute an attack on the server  
@@ -85,6 +91,12 @@ tăng tốc file chỉ mất 29 giây nó đã làm nhiệm vụ khi sử dụng
 tự động nuke khi bot tham gia kênh nó sẽ làm nhiệm vụ
 Xáo trộn tất cả các kênh vị trí trong máy chủ trong 1 phút và vai trò
 thêm lệnh help cho người sử dụng làm quen
+Đã thêm một biến mới shuffleChannelsActiveđể theo dõi trạng thái của shuffle_channelslệnh.
+Đã cập nhật shuffleChannelshàm để đặt shuffleChannelsActivethành true khi bắt đầu và sai khi kết thúc.
+Đã cập nhật performAttackhàm để kiểm tra xem có đúng autoNukeActivehay không shuffleChannelsActivetrước khi thực thi.
+Đã cập nhật auto_nukelệnh để kiểm tra xem shuffleChannelsActivecó đúng không trước khi bắt đầu.
+Đã cập nhật shuffle_channelslệnh để kiểm tra xem có đúng autoNukeActivehay không attackActivetrước khi thực thi.
+Điều này cần đảm bảo rằng các lệnh shuffle_channelsvà auto_nuke/ attackkhông can thiệp lẫn nhau.
 
 ## Hướng dẫn sử dụng lệnh
 ```!attack``` - Thực hiện một cuộc tấn công vào máy chủ
