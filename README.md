@@ -27,7 +27,7 @@ This bot is developed by **truongtrung**, a web developer with experience using 
 ```!attack``` - Execute an attack on the server  
 ```!unban_all``` - Unban all users in the server  
 ```!auto_nuke on/off``` - Start or stop auto nuke  
-```!shuffle_channels``` - Shuffle all channel positions within the server for 1 minute  
+```!shuffle_channels``` - Shuffle all channel positions within the server for 22 seconds
 ```!shuffle_roles``` - Shuffle all role positions within the server for 1 minute  
 ```!help``` - Display this help message  
 
@@ -102,7 +102,7 @@ thêm lệnh help cho người sử dụng làm quen
 ```!attack``` - Thực hiện một cuộc tấn công vào máy chủ
 ```!unban_all``` - Unban tất cả người dùng trong máy chủ
 ```!auto_nuke on/off``` - bắt đầu hoặc dừng tự động nuke
-```!shuffle_channels``` - xáo trộn tất cả các vị trí của các kênh trong máy chủ trong 1 phút
+```!shuffle_channels``` - xáo trộn tất cả các vị trí của các kênh trong máy chủ trong 22 giây
 ```!shuffle_roles``` - xáo trộn tất cả các vị trí của vai trò trong máy chủ trong 1 phút
 ```!help``` - Hiển thị thông báo trợ giúp này
 
